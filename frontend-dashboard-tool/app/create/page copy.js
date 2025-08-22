@@ -18,7 +18,6 @@ export default function Create() {
   const [ipfsResult, setIpfsResult] = useState(null);
   const [txResult, setTxResult] = useState(null);
   const [showTestResults, setShowTestResults] = useState(false);
-  const [generationError, setGenerationError] = useState(null);
   const { isConnected, walletAddress } = useWallet();
 
   const handleGenerate = async (e) => {
@@ -28,63 +27,13 @@ export default function Create() {
       return;
     }
     
-    if (!prompt.trim()) {
-      alert('Please enter a prompt description!');
-      return;
-    }
-    
     setIsGenerating(true);
-    setGenerationError(null);
-    setGeneratedImage(null);
     
-    try {
-      // Prepare the API request
-      const apiUrl = 'https://887mg17t-3000.inc1.devtunnels.ms/api/generate-image';
-      const requestBody = {
-        query: prompt,
-        type: `${style}-${mood}`
-      };
-
-      console.log('Calling AI generation API:', apiUrl);
-      console.log('Request body:', requestBody);
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log('API response:', result);
-
-      if (!result.originalImage || !result.watermarkedImage) {
-        throw new Error('No image data received from API');
-      }
-
-      // Store both images from API response
-      const imageData = {
-        originalImage: `data:image/png;base64,${result.originalImage}`,
-        watermarkedImage: `data:image/png;base64,${result.watermarkedImage}`,
-        enhancedPrompt: result.enhancedPrompt,
-        mimeType: result.mimeType
-      };
-      setGeneratedImage(imageData);
-      
-      console.log('Image generated successfully');
-      
-    } catch (error) {
-      console.error('Image generation error:', error);
-      setGenerationError(error.message);
-      alert(`Failed to generate image: ${error.message}`);
-    } finally {
+    // Simulate AI generation delay
+    setTimeout(() => {
+      setGeneratedImage('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=512&h=512&fit=crop');
       setIsGenerating(false);
-    }
+    }, 2000);
   };
 
   const handleMint = async () => {
@@ -116,14 +65,8 @@ export default function Create() {
         creationDate: new Date().toISOString()
       };
 
-      console.log('Uploading generated images to IPFS...');
-      console.log('Image data type:', typeof generatedImage);
-      console.log('Original image preview:', generatedImage.originalImage.substring(0, 50) + '...');
-      console.log('Watermarked image preview:', generatedImage.watermarkedImage.substring(0, 50) + '...');
-      console.log('Metadata:', metadata);
-
-      // Upload to IPFS via Pinata - pass both images and metadata
-      const result = await ipfsService.uploadDualImagesToIPFS(generatedImage, metadata);
+      // Upload to IPFS via Pinata
+      const result = await ipfsService.uploadImageToIPFS(generatedImage, metadata);
       
       if (!result.success) {
         alert(`IPFS upload failed: ${result.error}`);
@@ -131,11 +74,9 @@ export default function Create() {
       }
 
       setIpfsResult(result);
-      console.log('IPFS upload successful:', result);
 
-      // Call smart contract mint with metadata hash, license, and price
-      console.log('Minting NFT with metadata hash:', result.metadataHash, 'license:', license, 'price:', price);
-      const mint = await mintCreation(result.metadataHash, license, price);
+      // Call smart contract mint with metadata hash
+      const mint = await mintCreation(result.metadataHash);
       setTxResult({
         txHash: mint.txHash,
         blockNumber: mint.receipt.blockNumber,
@@ -186,7 +127,7 @@ export default function Create() {
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="Describe the image you want to generate..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-black bg-white placeholder-gray-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   rows={4}
                   required
                 />
@@ -200,7 +141,7 @@ export default function Create() {
                   <select
                     value={style}
                     onChange={(e) => setStyle(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="realistic">Realistic</option>
                     <option value="artistic">Artistic</option>
@@ -217,7 +158,7 @@ export default function Create() {
                   <select
                     value={mood}
                     onChange={(e) => setMood(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="neutral">Neutral</option>
                     <option value="happy">Happy</option>
@@ -239,7 +180,7 @@ export default function Create() {
                       value="free"
                       checked={license === 'free'}
                       onChange={(e) => setLicense(e.target.value)}
-                      className="mr-2 text-blue-600 focus:ring-blue-500"
+                      className="mr-2"
                     />
                     <span className="text-sm text-gray-700">Free to use</span>
                   </label>
@@ -249,7 +190,7 @@ export default function Create() {
                       value="paid"
                       checked={license === 'paid'}
                       onChange={(e) => setLicense(e.target.value)}
-                      className="mr-2 text-blue-600 focus:ring-blue-500"
+                      className="mr-2"
                     />
                     <span className="text-sm text-gray-700">Paid license</span>
                   </label>
@@ -268,7 +209,7 @@ export default function Create() {
                     placeholder="0.01"
                     step="0.01"
                     min="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white placeholder-gray-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -276,20 +217,12 @@ export default function Create() {
 
               <button
                 type="submit"
-                disabled={isGenerating || !prompt.trim() || !isConnected}
+                disabled={isGenerating || !prompt || !isConnected}
                 className="w-full bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
               >
                 {isGenerating ? 'Generating...' : 'Generate Image'}
               </button>
             </form>
-
-            {generationError && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-800 text-sm">
-                  Generation error: {generationError}
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Generated Image Preview */}
@@ -305,18 +238,10 @@ export default function Create() {
               ) : generatedImage ? (
                 <div className="w-full h-full">
                   <img
-                    src={typeof generatedImage === 'string' ? generatedImage : generatedImage.originalImage}
+                    src={generatedImage}
                     alt="Generated image"
                     className="w-full h-full object-cover rounded-lg"
                   />
-                  {typeof generatedImage === 'object' && (
-                    <div className="mt-2 text-xs text-gray-500">
-                      <p>License: <span className="font-medium">{license}</span></p>
-                      {license === 'paid' && price && (
-                        <p>Price: <span className="font-medium">{price} ETH</span></p>
-                      )}
-                    </div>
-                  )}
                   <div className="mt-4">
                     <button
                       onClick={handleMint}

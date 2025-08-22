@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@bnb-chain/greenfield-js-sdk": "^2.2.2",
     "ethers": "^5.7.2",
     "next": "15.5.0",
     "react": "19.1.0",
@@ -15,6 +16,8 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4"
+    "@types/react": "19.1.10",
+    "tailwindcss": "^4",
+    "typescript": "5.9.2"
   }
 }

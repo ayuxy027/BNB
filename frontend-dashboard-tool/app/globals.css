@@ -32,3 +32,13 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Ensure input fields have proper contrast */
+input, textarea, select {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #6b7280 !important;
+}

@@ -1,49 +1,73 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import Navbar from './components/Navbar';
 import CreationCard from './components/CreationCard';
-import { fetchAllCreations } from './services/contractService';
-import { useWallet } from './providers/WalletProvider';
+import { useEffect, useState, useMemo, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Multi-gateway metadata fetching utility
-const fetchMetadataWithFallback = async (ipfsHash) => {
-  const gateways = [
-    `https://gateway.pinata.cloud/ipfs/${ipfsHash}`,
-    `https://ipfs.io/ipfs/${ipfsHash}`,
-    `https://cloudflare-ipfs.com/ipfs/${ipfsHash}`,
-    `https://dweb.link/ipfs/${ipfsHash}`,
-    `https://gateway.ipfs.io/ipfs/${ipfsHash}`,
-    `https://ipfs.fleek.co/ipfs/${ipfsHash}`,
-    `https://cf-ipfs.com/ipfs/${ipfsHash}`,
-    `https://4everland.io/ipfs/${ipfsHash}`
-  ];
-
-  for (let i = 0; i < gateways.length; i++) {
-    try {
-      console.log(`Trying metadata gateway ${i + 1}/${gateways.length}: ${gateways[i]}`);
-      const response = await fetch(gateways[i], {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-        mode: 'cors'
-      });
-      
-      if (response.ok) {
-        const metadata = await response.json();
-        console.log(`Metadata fetched successfully from gateway ${i + 1}`);
-        return metadata;
-      }
-    } catch (error) {
-      console.warn(`Gateway ${i + 1} failed:`, error.message);
-      continue;
-    }
+// Mock data for creations
+const mockCreations = [
+  {
+    id: 1,
+    prompt: "A futuristic cityscape with flying cars and neon lights",
+    imageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=400&fit=crop",
+    creator: "0x1234...5678",
+    date: "2024-01-15",
+    tags: ["futuristic", "city", "neon"],
+    license: "free",
+    price: null
+  },
+  {
+    id: 2,
+    prompt: "A serene mountain landscape at sunset",
+    imageUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop",
+    creator: "0x8765...4321",
+    date: "2024-01-14",
+    tags: ["nature", "mountains", "sunset"],
+    license: "paid",
+    price: "0.05"
+  },
+  {
+    id: 3,
+    prompt: "Abstract digital art with geometric patterns",
+    imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
+    creator: "0xabcd...efgh",
+    date: "2024-01-13",
+    tags: ["abstract", "geometric", "digital"],
+    license: "free",
+    price: null
+  },
+  {
+    id: 4,
+    prompt: "A magical forest with glowing mushrooms",
+    imageUrl: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=400&fit=crop",
+    creator: "0x9876...5432",
+    date: "2024-01-12",
+    tags: ["magical", "forest", "fantasy"],
+    license: "paid",
+    price: "0.1"
+  },
+  {
+    id: 5,
+    prompt: "Cyberpunk street scene with rain",
+    imageUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=400&fit=crop",
+    creator: "0x5678...1234",
+    date: "2024-01-11",
+    tags: ["cyberpunk", "street", "rain"],
+    license: "free",
+    price: null
+  },
+  {
+    id: 6,
+    prompt: "Underwater coral reef with tropical fish",
+    imageUrl: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=400&fit=crop",
+    creator: "0xefgh...abcd",
+    date: "2024-01-10",
+    tags: ["underwater", "coral", "tropical"],
+    license: "paid",
+    price: "0.03"
   }
-  
-  throw new Error('All metadata gateways failed');
-};
+];
 
 // Filter configuration - easily extensible
 const FILTER_CONFIG = {
@@ -147,16 +171,14 @@ const poppinsFontUrl =
   "https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap";
 
 export default function Home() {
-  const [allCreations, setAllCreations] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // State management
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const { walletAddress } = useWallet();
+  const [creations, setCreations] = useState(mockCreations);
   const router = useRouter();
 
   // Memoized filtered creations
-  const filteredCreations = useFilteredCreations(allCreations, activeFilter);
+  const filteredCreations = useFilteredCreations(creations, activeFilter);
 
   // Memoized search results
   const searchResults = useMemo(() => {
@@ -166,7 +188,7 @@ export default function Home() {
     return filteredCreations.filter(creation => 
       creation.prompt.toLowerCase().includes(query) ||
       creation.creator.toLowerCase().includes(query) ||
-      (creation.tags && creation.tags.some(tag => tag.toLowerCase().includes(query)))
+      creation.tags.some(tag => tag.toLowerCase().includes(query))
     );
   }, [filteredCreations, searchQuery]);
 
@@ -206,159 +228,6 @@ export default function Home() {
         document.body.style.fontFamily = '';
       }
     };
-  }, []);
-
-  // Fetch all creations from smart contract
-  const fetchAllNFTs = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      console.log('=== STARTING FETCH ALL NFTS ===');
-      console.log('Fetching all creations from smart contract...');
-      const creations = await fetchAllCreations();
-      console.log('Raw contract data:', creations);
-      console.log('Number of creations found:', creations.length);
-      
-      if (creations.length === 0) {
-        console.log('No creations found in smart contract');
-        setAllCreations([]);
-        return;
-      }
-      
-      // Transform the raw contract data into the format expected by CreationCard
-      const transformedCreations = await Promise.all(
-        creations.map(async (creation, index) => {
-          console.log(`\n--- Processing Creation ${index + 1}/${creations.length} ---`);
-          console.log('Token ID:', creation.tokenId);
-          console.log('Token URI:', creation.tokenURI);
-          console.log('Creator:', creation.creator);
-          console.log('Created At:', creation.createdAt);
-          
-          try {
-            // Extract IPFS hash from tokenURI
-            const ipfsHash = creation.tokenURI.replace('ipfs://', '');
-            console.log(`Extracted IPFS hash: ${ipfsHash}`);
-            
-            // Fetch metadata using multi-gateway approach
-            const metadata = await fetchMetadataWithFallback(ipfsHash);
-            console.log(`Full metadata for token ${creation.tokenId}:`, metadata);
-            
-            // Ensure we have proper IPFS image URLs
-            let imageUrl = '';
-            let watermarkedImageUrl = '';
-            if (metadata.image) {
-              imageUrl = metadata.image.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
-              console.log(`Resolved original image URL for token ${creation.tokenId}: ${imageUrl}`);
-            } else {
-              console.warn(`No original image URL found in metadata for token ${creation.tokenId}`);
-              console.log('Available metadata keys:', Object.keys(metadata));
-            }
-            
-            if (metadata.watermarkedImage) {
-              watermarkedImageUrl = metadata.watermarkedImage.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
-              console.log(`Resolved watermarked image URL for token ${creation.tokenId}: ${watermarkedImageUrl}`);
-            } else {
-              console.log(`No watermarked image URL found in metadata for token ${creation.tokenId} - using original as fallback`);
-              watermarkedImageUrl = imageUrl; // Fallback to original
-            }
-            
-            // Extract attributes more robustly
-            const attributes = metadata.attributes || [];
-            console.log('Attributes found:', attributes);
-            
-            const style = attributes.find(attr => attr.trait_type === 'Style')?.value || 'unknown';
-            const mood = attributes.find(attr => attr.trait_type === 'Mood')?.value || 'unknown';
-            const license = attributes.find(attr => attr.trait_type === 'License')?.value || 'free';
-            const price = attributes.find(attr => attr.trait_type === 'Price')?.value || null;
-            const creationId = attributes.find(attr => attr.trait_type === 'Creation ID')?.value || metadata.creationId || 'unknown';
-            
-            // Create tags from attributes
-            const tags = attributes
-              .filter(attr => ['Style', 'Mood'].includes(attr.trait_type))
-              .map(attr => attr.value)
-              .filter(Boolean);
-            
-            const transformedCreation = {
-              id: creation.tokenId,
-              prompt: metadata.description || metadata.name || 'AI Generated Art',
-              imageUrl: imageUrl,
-              watermarkedImageUrl: watermarkedImageUrl,
-              creator: creation.creator,
-              owner: creation.owner,
-              date: new Date(creation.createdAt * 1000).toLocaleDateString(),
-              tags: tags,
-              license: license,
-              price: price,
-              tokenId: creation.tokenId,
-              creationId: creationId,
-              style: style,
-              mood: mood,
-              metadata: metadata
-            };
-            
-            console.log('Transformed creation object:', transformedCreation);
-            return transformedCreation;
-            
-          } catch (metadataError) {
-            console.error(`Error fetching metadata for token ${creation.tokenId}:`, metadataError);
-            console.error('Error details:', {
-              message: metadataError.message,
-              stack: metadataError.stack
-            });
-            
-            // Return a minimal creation object if metadata fetch fails - no fallback image
-            return {
-              id: creation.tokenId,
-              prompt: `AI Generated Art #${creation.tokenId}`,
-              imageUrl: '', // No fallback image - will show placeholder in component
-              creator: creation.creator,
-              owner: creation.owner,
-              date: new Date(creation.createdAt * 1000).toLocaleDateString(),
-              tags: ['ai-generated'],
-              license: 'free',
-              price: null,
-              tokenId: creation.tokenId,
-              creationId: `unknown-${creation.tokenId}`,
-              style: 'unknown',
-              mood: 'unknown',
-              metadata: null
-            };
-          }
-        })
-      );
-      
-      console.log('\n=== TRANSFORMATION COMPLETE ===');
-      console.log('Final transformed creations:', transformedCreations);
-      console.log('Creations with images:', transformedCreations.filter(c => c.imageUrl).length);
-      console.log('Creations without images:', transformedCreations.filter(c => !c.imageUrl).length);
-      
-      // Sort by creation date (newest first)
-      const sortedCreations = transformedCreations.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return dateB - dateA;
-      });
-      
-      console.log('Final sorted creations to be displayed:', sortedCreations);
-      setAllCreations(sortedCreations);
-      
-    } catch (error) {
-      console.error('=== FETCH ERROR ===');
-      console.error('Error fetching all creations:', error);
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack
-      });
-      setError(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Fetch all creations on component mount
-  useEffect(() => {
-    fetchAllNFTs();
   }, []);
 
   return (
@@ -450,21 +319,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Error Display */}
-        {error && (
-          <div className="mb-8 bg-red-50/80 backdrop-blur-sm border border-red-200/60 rounded-2xl p-6 shadow-lg">
-            <p className="text-red-800 font-medium">
-              Error loading creations: {error}
-            </p>
-            <button
-              onClick={fetchAllNFTs}
-              className="mt-3 bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600 transition-colors font-medium"
-            >
-              Try Again
-            </button>
-          </div>
-        )}
-
         {/* Filter Section */}
         <div className="mb-12 flex justify-center">
           <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-2xl px-8 py-4 shadow-lg">
@@ -475,7 +329,6 @@ export default function Home() {
                   filterType={key}
                   isActive={activeFilter === key}
                   onClick={handleFilter}
-                  count={config.count(allCreations)}
                 >
                   {config.label}
                 </FilterButton>
@@ -484,7 +337,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Search Results Summary */}
+        {/* Results Summary */}
         {searchQuery && (
           <div className="mb-6 text-center">
             <p className="text-gray-600">
@@ -493,47 +346,19 @@ export default function Home() {
           </div>
         )}
 
-        {/* Loading State */}
-        {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-            <span className="ml-3 text-gray-600">Loading community creations...</span>
-          </div>
-        ) : searchResults.length > 0 ? (
-          /* Gallery Grid */
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 lg:gap-12">
-            {searchResults.map((creation) => (
-              <CreationCard 
-                key={creation.id} 
-                creation={creation} 
-                userAddress={walletAddress}
-                onPurchaseSuccess={fetchAllNFTs}
-              />
-            ))}
-          </div>
-        ) : (
-          /* Empty State */
+        {/* Gallery Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 lg:gap-12">
+          {searchResults.map((creation) => (
+            <CreationCard key={creation.id} creation={creation} />
+          ))}
+        </div>
+
+        {/* Empty State */}
+        {searchResults.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-gray-400 mb-4">
-              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchQuery ? 'No results found for your search.' : 'No creations yet'}
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {searchQuery 
-                ? 'Try adjusting your search terms or browse all creations.'
-                : 'Be the first to create an AI masterpiece and share it with the community!'
-              }
+            <p className="text-gray-500 text-lg">
+              {searchQuery ? 'No results found for your search.' : 'No items to display.'}
             </p>
-            <a
-              href="/create"
-              className="bg-blue-500 text-white px-6 py-2 rounded-xl hover:bg-blue-600 transition-colors font-medium"
-            >
-              Create Your First NFT
-            </a>
           </div>
         )}
       </main>

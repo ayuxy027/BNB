@@ -18,24 +18,46 @@ export default function WalletProvider({ children }) {
 
   const connectWallet = async () => {
     if (typeof window === 'undefined') return;
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        setWalletAddress(accounts[0] || '');
-        setIsConnected(Boolean(accounts[0]));
-      } catch (error) {
-        console.error('Error connecting wallet:', error);
-      }
-    } else {
+    const { ethereum } = window;
+    if (!ethereum) {
       alert('Please install MetaMask!');
+      return;
+    }
+    try {
+      // Force the permissions dialog so the user can pick an account every time
+      await ethereum.request({
+        method: 'wallet_requestPermissions',
+        params: [{ eth_accounts: {} }],
+      });
+
+      const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+      setWalletAddress(accounts[0] || '');
+      setIsConnected(Boolean(accounts[0]));
+      if (accounts[0]) {
+        localStorage.setItem('walletConnected', 'true');
+        localStorage.setItem('walletAddress', accounts[0]);
+      }
+    } catch (error) {
+      console.error('Error connecting wallet:', error);
     }
   };
 
-  const disconnectWallet = () => {
+  const disconnectWallet = async () => {
+    // Revoke site permission so next connect triggers MetaMask popup
+    try {
+      if (typeof window !== 'undefined' && window.ethereum) {
+        await window.ethereum.request({
+          method: 'wallet_revokePermissions',
+          params: [{ eth_accounts: {} }],
+        });
+      }
+    } catch (e) {
+      // Some wallets may not support revoke; ignore
+    }
+
     setWalletAddress('');
     setIsConnected(false);
-    
-    // Clear any stored wallet data
+
     if (typeof window !== 'undefined') {
       localStorage.removeItem('walletConnected');
       localStorage.removeItem('walletAddress');
@@ -44,19 +66,18 @@ export default function WalletProvider({ children }) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (typeof window.ethereum === 'undefined') return;
+    const { ethereum } = window;
+    if (!ethereum) return;
 
     const handleAccountsChanged = (accounts) => {
       if (!accounts || accounts.length === 0) {
         setWalletAddress('');
         setIsConnected(false);
-        // Clear stored data when accounts change to empty
         localStorage.removeItem('walletConnected');
         localStorage.removeItem('walletAddress');
       } else {
         setWalletAddress(accounts[0]);
         setIsConnected(true);
-        // Store connection state
         localStorage.setItem('walletConnected', 'true');
         localStorage.setItem('walletAddress', accounts[0]);
       }
@@ -69,38 +90,26 @@ export default function WalletProvider({ children }) {
       localStorage.removeItem('walletAddress');
     };
 
-    // Check for existing connection on mount
-    const checkExistingConnection = async () => {
+    // Only reflect current permission without auto-connecting silently
+    (async () => {
       try {
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        const accounts = await ethereum.request({ method: 'eth_accounts' });
         if (accounts && accounts.length > 0) {
           setWalletAddress(accounts[0]);
           setIsConnected(true);
           localStorage.setItem('walletConnected', 'true');
           localStorage.setItem('walletAddress', accounts[0]);
         }
-      } catch (error) {
-        console.error('Error checking existing connection:', error);
-      }
-    };
+      } catch {}
+    })();
 
-    checkExistingConnection();
-
-    // Listen for account changes
-    window.ethereum.on('accountsChanged', handleAccountsChanged);
-    
-    // Listen for disconnect events
-    window.ethereum.on('disconnect', handleDisconnect);
-    window.ethereum.on('chainChanged', () => {
-      // Optionally handle chain changes
-      window.location.reload();
-    });
+    ethereum.on('accountsChanged', handleAccountsChanged);
+    ethereum.on('disconnect', handleDisconnect);
 
     return () => {
-      try { 
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-        window.ethereum.removeListener('disconnect', handleDisconnect);
-        window.ethereum.removeListener('chainChanged', () => {});
+      try {
+        ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        ethereum.removeListener('disconnect', handleDisconnect);
       } catch {}
     };
   }, []);
