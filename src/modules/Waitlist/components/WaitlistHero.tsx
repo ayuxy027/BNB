@@ -5,7 +5,6 @@ import Image from 'next/image';
 import Navbar from '../../../common/Navbar';
 import WaitlistMarquee from './WaitlistMarquee';
 import WaitlistBadge from './WaitlistBadge';
-import WaitlistForm from './WaitlistForm';
 import underline from '../assets/underline.svg';
 
 const poppinsFontUrl =
@@ -77,8 +76,6 @@ const WaitlistHero: React.FC = () => {
             <p className="text-slate-600 md:text-base max-md:px-2 text-center max-w-xl mt-3">
                 An AI powered presentations generator that uses fast inference model providors for lightning fast text generation and crystal clear images.
             </p>
-
-            <WaitlistForm className="mt-8" />
 
             <div className="mt-16">
                 <WaitlistMarquee />

@@ -75,14 +75,6 @@ const Navbar: React.FC = () => {
         </button>
       </div>
 
-      {/* Desktop join waitlist button */}
-      <button
-        className="hidden md:block bg-slate-800 hover:bg-slate-900 text-white px-6 py-2.5 rounded-full font-medium transition cursor-pointer"
-        onClick={scrollToWaitlist}
-      >
-        Join Waitlist
-      </button>
-
       {/* Mobile menu toggle */}
       <button
         className="md:hidden bg-gray-900 hover:bg-gray-800 text-white p-2 rounded-md aspect-square font-medium transition"
