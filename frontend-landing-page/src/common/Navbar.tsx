@@ -44,7 +44,7 @@ const Navbar: React.FC = () => {
           ].join(' ')
         }
       >
-        <Link href="/" className="hover:text-gray-500" onClick={handleCloseMenu}>
+        <Link href="/dashboard" className="hover:text-gray-500" onClick={handleCloseMenu}>
           Dashboard
         </Link>
         <Link href="/" className="hover:text-gray-500" onClick={handleCloseMenu}>
