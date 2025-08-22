@@ -49,28 +49,23 @@ const fetchMetadataWithFallback = async (ipfsHash) => {
 const FILTER_CONFIG = {
   all: { 
     label: 'All', 
-    filter: (items) => items,
-    count: (items) => items.length
+    filter: (items) => items
   },
   free: { 
     label: 'Free', 
-    filter: (items) => items.filter(item => item.license === 'free'),
-    count: (items) => items.filter(item => item.license === 'free').length
+    filter: (items) => items.filter(item => item.license === 'free')
   },
   premium: { 
     label: 'Premium', 
-    filter: (items) => items.filter(item => item.license === 'paid'),
-    count: (items) => items.filter(item => item.license === 'paid').length
+    filter: (items) => items.filter(item => item.license === 'paid')
   },
   recent: { 
     label: 'Recent', 
-    filter: (items) => [...items].sort((a, b) => new Date(b.date) - new Date(a.date)),
-    count: (items) => items.length
+    filter: (items) => [...items].sort((a, b) => new Date(b.date) - new Date(a.date))
   },
   popular: { 
     label: 'Popular', 
-    filter: (items) => items, // Placeholder for future popularity logic
-    count: (items) => items.length
+    filter: (items) => items // Placeholder for future popularity logic
   }
 };
 
@@ -83,7 +78,7 @@ const useFilteredCreations = (creations, activeFilter) => {
 };
 
 // Memoized filter button component
-const FilterButton = memo(({ filterType, isActive, onClick, children, count }) => {
+const FilterButton = memo(({ filterType, isActive, onClick, children }) => {
   const handleClick = useCallback(() => {
     onClick(filterType);
   }, [filterType, onClick]);
@@ -98,13 +93,6 @@ const FilterButton = memo(({ filterType, isActive, onClick, children, count }) =
       }`}
     >
       {children}
-      {count !== undefined && (
-        <span className={`ml-2 text-xs px-2 py-1 rounded-full ${
-          isActive ? 'bg-white/20' : 'bg-gray-200'
-        }`}>
-          {count}
-        </span>
-      )}
     </button>
   );
 });
@@ -475,7 +463,6 @@ export default function Home() {
                   filterType={key}
                   isActive={activeFilter === key}
                   onClick={handleFilter}
-                  count={config.count(allCreations)}
                 >
                   {config.label}
                 </FilterButton>
