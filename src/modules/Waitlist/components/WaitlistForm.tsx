@@ -1,19 +1,49 @@
 'use client';
 
 import React, { useState } from 'react';
-import { addToWaitlist } from '../utils/supabase';
-import { validateEmail, validateName } from '../utils/validation';
 import BorderAnimationButton from '../../../common/BorderAnimationButton';
 
 interface WaitlistFormProps {
   className?: string;
 }
 
+// --- VALIDATION FUNCTIONS ADDED HERE ---
+const validateEmail = (email: string): { isValid: boolean; error?: string } => {
+  if (!email) {
+    return { isValid: false, error: 'Email address is required.' };
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return { isValid: false, error: 'Please enter a valid email address.' };
+  }
+  return { isValid: true };
+};
+
+const validateName = (name: string): { isValid: boolean; error?: string } => {
+  // Name is optional, so an empty string is valid.
+  if (name && name.length < 2) {
+    return { isValid: false, error: 'Name must be at least 2 characters long.' };
+  }
+  return { isValid: true };
+};
+// -----------------------------------------
+
+/**
+ * A hardcoded function to simulate adding a user to the waitlist.
+ * It returns a success message after a 1-second delay.
+ */
+const hardcodedAddToWaitlist = async (email: string, name: string) => {
+  console.log(`Simulating adding user to waitlist:`, { email, name });
+  // Wait for 1 second to mimic a network request
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  // Always return a success response
+  return { success: true, error: null };
+};
+
 /**
  * WaitlistForm Component
- * 
- * A translucent form component for beta waitlist signup with Supabase integration.
- * Features email validation, loading states, and success/error feedback.
+ * A translucent form component for beta waitlist signup.
+ * This version is hardcoded and does not connect to Supabase.
  */
 const WaitlistForm: React.FC<WaitlistFormProps> = ({ className = '' }) => {
   const [email, setEmail] = useState<string>('');
@@ -22,12 +52,11 @@ const WaitlistForm: React.FC<WaitlistFormProps> = ({ className = '' }) => {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   /**
-   * Handles form submission with validation and Supabase integration
+   * Handles form submission with validation and a simulated API call.
    */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
 
-    // Validate inputs
     const emailValidation = validateEmail(email);
     const nameValidation = validateName(name);
 
@@ -44,7 +73,7 @@ const WaitlistForm: React.FC<WaitlistFormProps> = ({ className = '' }) => {
     setIsSubmitting(true);
     setMessage(null);
 
-    const result = await addToWaitlist(email, name);
+    const result = await hardcodedAddToWaitlist(email, name);
 
     if (result.success) {
       setMessage({ type: 'success', text: 'Successfully joined the beta waitlist!' });
@@ -59,27 +88,21 @@ const WaitlistForm: React.FC<WaitlistFormProps> = ({ className = '' }) => {
 
   return (
     <div className={`relative max-w-md w-full mx-auto ${className}`}>
-      {/* Translucent background with gradient border */}
       <div className="absolute inset-0 bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 rounded-2xl blur-sm opacity-60"></div>
       <div className="relative bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl p-6 shadow-xl">
-
-        {/* Header */}
         <div className="text-center mb-6">
           <h3 className="text-xl font-semibold mb-2 bg-gradient-to-r from-black to-[#748298] text-transparent bg-clip-text">Join Beta Waitlist</h3>
           <p className="text-sm text-slate-600">Be among the first to try Weave</p>
         </div>
 
-        {/* Success/Error Messages */}
         {message && (
           <div className={`mb-4 p-3 rounded-xl text-sm backdrop-blur-sm ${message.type === 'success'
             ? 'bg-green-100/70 text-green-800 border border-green-200/50'
             : 'bg-red-100/70 text-red-800 border border-red-200/50'
-            }`}>
+          }`}>
             {message.text}
           </div>
         )}
-
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <input
