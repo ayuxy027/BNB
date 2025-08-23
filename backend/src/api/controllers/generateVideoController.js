@@ -20,38 +20,36 @@ if (!GCP_PROJECT_ID) {
 const GOOGLE_CREDENTIALS_PATH = "C:/Users/patil/Documents/Web Devlopment/BNB/BNB/backend/bnb-hack-469810-cc330915ff0e.json";
 
 async function getAccessToken() {
-  try {
-    if (!fs.existsSync(GOOGLE_CREDENTIALS_PATH)) {
-      throw new Error(`Credentials file not found at: ${GOOGLE_CREDENTIALS_PATH}`);
+    try {
+        if (!fs.existsSync(GOOGLE_CREDENTIALS_PATH)) {
+            throw new Error(`Credentials file not found at: ${GOOGLE_CREDENTIALS_PATH}`);
+        }
+
+        console.log("Using credentials file path:", GOOGLE_CREDENTIALS_PATH);
+
+        const auth = new GoogleAuth({
+            keyFile: GOOGLE_CREDENTIALS_PATH,
+            scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+        });
+
+        const client = await auth.getClient();
+        const accessToken = await client.getAccessToken();
+
+        if (!accessToken.token) {
+            throw new Error("Failed to obtain access token");
+        }
+
+        console.log("Authentication successful ✅");
+        return accessToken.token;
+    } catch (error) {
+        console.error("Authentication failed ❌:", error.message);
+        throw new Error(`Authentication failed: ${error.message}`);
     }
-
-    console.log("Using credentials file path:", GOOGLE_CREDENTIALS_PATH);
-
-    const auth = new GoogleAuth({
-      keyFile: GOOGLE_CREDENTIALS_PATH,
-      scopes: ["https://www.googleapis.com/auth/cloud-platform"],
-    });
-
-    const client = await auth.getClient();
-    const accessToken = await client.getAccessToken();
-
-    if (!accessToken.token) {
-      throw new Error("Failed to obtain access token");
-    }
-
-    console.log("Authentication successful ✅");
-    return accessToken.token;
-  } catch (error) {
-    console.error("Authentication failed ❌:", error.message);
-    throw new Error(`Authentication failed: ${error.message}`);
-  }
 }
 
-// Start video generation (simplified - no query enhancement needed)
 async function startVideoGeneration(params) {
     const { prompt, resolution, generateAudio, personGeneration } = params;
     
-    // Use the latest Veo 3 model
     const MODEL_ID = "veo-3.0-generate-001";
     const API_ENDPOINT = `https://${GCP_LOCATION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/${GCP_LOCATION}/publishers/google/models/${MODEL_ID}:predictLongRunning`;
 
@@ -62,14 +60,14 @@ async function startVideoGeneration(params) {
         const accessToken = await getAccessToken();
         
         const requestBody = {
-            instances: [{ prompt: prompt }], // Use raw user prompt
+            instances: [{ prompt: prompt }],
             parameters: {
                 resolution: resolution,
                 generateAudio: generateAudio,
                 personGeneration: personGeneration,
                 durationSeconds: 8,
                 sampleCount: 1,
-                enhancePrompt: true, // Let Veo enhance the prompt automatically
+                enhancePrompt: true,
                 fps: 24,
                 outputMimeType: "video/mp4"
             }
@@ -102,7 +100,6 @@ async function startVideoGeneration(params) {
     }
 }
 
-// Polling function (unchanged)
 async function pollForVideoResult(operationName) {
     const MODEL_ID = "veo-3.0-generate-001";
     const API_ENDPOINT = `https://${GCP_LOCATION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/${GCP_LOCATION}/publishers/google/models/${MODEL_ID}:fetchPredictOperation`;
@@ -186,162 +183,87 @@ async function pollForVideoResult(operationName) {
     throw new Error(`Video generation timed out after ${MAX_POLLS} polling attempts.`);
 }
 
-// Fixed watermark function with correct logo path
-// Simple large watermark function for preview purposes
-async function addWatermarkToVideo(base64Video) {
+// Helper function for cleanup
+async function cleanupFiles(filePaths) {
+    const cleanupPromises = filePaths.map(filePath => 
+        unlinkAsync(filePath).catch(err => {
+            console.warn(`Failed to cleanup ${filePath}:`, err.message);
+        })
+    );
+    
+    await Promise.all(cleanupPromises);
+}
+
+// Simple text watermark function
+async function addSimpleTextWatermark(base64Video) {
     const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const tempDir = path.join(process.cwd(), 'tmp');
     const inputPath = path.join(tempDir, `${tempId}_input.mp4`);
     const outputPath = path.join(tempDir, `${tempId}_output.mp4`);
-    const logoPath = path.join(process.cwd(), 'logo.png');
     
-    console.log('Looking for logo at:', logoPath);
+    console.log('Adding simple text watermark...');
 
-    // Ensure temp directory exists
     if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
     }
     
-    // If no local logo, create a simple text watermark
-    if (!fs.existsSync(logoPath)) {
-        console.log('No logo found, creating preview watermark...');
-        try {
-            await createPreviewWatermark(logoPath);
-        } catch (error) {
-            console.warn('Failed to create watermark, skipping:', error.message);
-            return base64Video;
-        }
-    }
-    
     try {
-        console.log('Adding large preview watermark...');
-        
-        // Write input video file
         await writeFileAsync(inputPath, Buffer.from(base64Video, 'base64'));
         
         return new Promise((resolve, reject) => {
             ffmpeg(inputPath)
-                .input(logoPath)
-                .complexFilter([
-                    // Scale logo to be large but not overwhelming
-                    // Make it semi-transparent for preview effect
-                    '[1:v] scale=min(iw*2\\,W/2):min(ih*2\\,H/3),format=rgba,colorchannelmixer=aa=0.4 [logo]',
-                    
-                    // Center the watermark on the video
-                    '[0:v][logo] overlay=(W-w)/2:(H-h)/2'
-                ])
+                .videoFilter([
+                    "drawtext=text='PREVIEW'",
+                    "fontsize=48",
+                    "fontcolor=white@0.7",
+                    "x=(w-tw)/2",
+                    "y=(h-th)/2",
+                    "box=1",
+                    "boxcolor=black@0.5",
+                    "boxborderw=8"
+                ].join(':'))
                 .outputOptions([
-                    '-c:v libx264',
-                    '-preset medium',
-                    '-crf 23',
-                    '-c:a copy',
+                    '-c:v', 'libx264',
+                    '-preset', 'medium', 
+                    '-crf', '23',
+                    '-c:a', 'copy',
                     '-movflags', '+faststart'
                 ])
                 .on('start', (commandLine) => {
-                    console.log('FFmpeg started with large preview watermark');
+                    console.log('Starting simple text watermark...');
                 })
                 .on('progress', (progress) => {
-                    console.log(`Preview watermarking: ${Math.round(progress.percent || 0)}%`);
+                    if (progress.percent) {
+                        console.log(`Text watermarking: ${Math.round(progress.percent)}%`);
+                    }
                 })
                 .on('end', async () => {
                     try {
-                        console.log('Preview watermark applied successfully!');
+                        console.log('Text watermark completed!');
                         const watermarkedBuffer = fs.readFileSync(outputPath);
                         
-                        // Cleanup temp files
-                        await Promise.all([
-                            unlinkAsync(inputPath).catch(() => {}),
-                            unlinkAsync(outputPath).catch(() => {})
-                        ]);
-                        
+                        await cleanupFiles([inputPath, outputPath]);
                         resolve(watermarkedBuffer.toString('base64'));
                     } catch (error) {
-                        reject(new Error(`Failed to read watermarked video: ${error.message}`));
+                        await cleanupFiles([inputPath, outputPath]);
+                        reject(error);
                     }
                 })
                 .on('error', async (err) => {
-                    console.error("Preview watermarking error:", err);
-                    
-                    // Cleanup temp files
-                    await Promise.all([
-                        unlinkAsync(inputPath).catch(() => {}),
-                        unlinkAsync(outputPath).catch(() => {})
-                    ]);
-                    
-                    reject(new Error(`Failed to watermark video: ${err.message}`));
+                    console.error("Text watermarking error:", err.message);
+                    await cleanupFiles([inputPath, outputPath]);
+                    reject(new Error(`Text watermarking failed: ${err.message}`));
                 })
                 .save(outputPath);
         });
+        
     } catch (error) {
-        console.error('Watermarking setup failed:', error);
-        
-        // Cleanup on setup failure
-        await Promise.all([
-            unlinkAsync(inputPath).catch(() => {}),
-            unlinkAsync(outputPath).catch(() => {})
-        ]);
-        
-        throw new Error(`Watermarking failed: ${error.message}`);
+        await cleanupFiles([inputPath, outputPath]);
+        throw error;
     }
 }
 
-// Create a simple "PREVIEW" text watermark
-async function createPreviewWatermark(logoPath) {
-    return new Promise((resolve, reject) => {
-        console.log('Creating PREVIEW watermark...');
-        
-        ffmpeg()
-            .input('color=transparent:size=400x120:duration=0.1')
-            .inputFormat('lavfi')
-            .outputOptions([
-                '-vf',
-                [
-                    // Large "PREVIEW" text with semi-transparent background
-                    'drawtext=text=PREVIEW:fontsize=48:fontcolor=white@0.8',
-                    'x=(w-tw)/2:y=(h-th)/2',
-                    'box=1:boxcolor=black@0.5:boxborderw=8',
-                    // Add a subtle border effect
-                    'borderw=2:bordercolor=white@0.6'
-                ].join(':'),
-                '-frames:v', '1',
-                '-y' // Overwrite if exists
-            ])
-            .on('end', () => {
-                console.log('✅ PREVIEW watermark created successfully');
-                resolve();
-            })
-            .on('error', (err) => {
-                console.error('❌ Failed to create PREVIEW watermark:', err);
-                reject(err);
-            })
-            .save(logoPath);
-    });
-}
-
-// Alternative: Download a simple watermark from online service
-async function downloadSimpleWatermark(logoPath) {
-    try {
-        // Simple transparent PNG with "PREVIEW" text
-        const watermarkUrl = 'https://via.placeholder.com/400x120/00000000/FFFFFF?text=PREVIEW';
-        
-        console.log('Downloading simple watermark...');
-        const response = await fetch(watermarkUrl);
-        
-        if (!response.ok) {
-            throw new Error(`Download failed: ${response.status}`);
-        }
-        
-        const buffer = await response.arrayBuffer();
-        await writeFileAsync(logoPath, Buffer.from(buffer));
-        
-        console.log('✅ Watermark downloaded successfully');
-    } catch (error) {
-        console.log('Download failed, creating text watermark instead');
-        await createPreviewWatermark(logoPath);
-    }
-}
-
-// --- Main Controller (Simplified) ---
+// --- MAIN CONTROLLER ---
 export const generateVideoController = async (req, res) => {
     if (req.method !== 'POST') {
         return res.status(405).json({ 
@@ -377,10 +299,10 @@ export const generateVideoController = async (req, res) => {
         console.log('Generate Audio:', voice);
         console.log('Person Generation:', personGeneration);
         
-        // Create styled prompt (simple concatenation)
+        // Create styled prompt
         const styledPrompt = `${query}, ${type} style`;
         
-        // Start video generation (Veo will enhance the prompt automatically)
+        // Start video generation
         const operationName = await startVideoGeneration({
             prompt: styledPrompt,
             resolution: resolution || '720p',
@@ -388,16 +310,19 @@ export const generateVideoController = async (req, res) => {
             personGeneration: personGeneration || 'allow_adult'
         });
         
-        // Poll for result
+        // Poll for result - THIS IS WHERE originalVideo IS DEFINED
         const originalVideo = await pollForVideoResult(operationName);
         
-        // Add watermark (optional)
-        let watermarkedVideo = originalVideo;
+        // Add watermark with proper error handling
+        let watermarkedVideo = originalVideo; // Initialize with original video
         try {
-            watermarkedVideo = await addWatermarkToVideo(originalVideo);
+            console.log('Attempting to add watermark...');
+            watermarkedVideo = await addSimpleTextWatermark(originalVideo);
+            console.log('✅ Watermark applied successfully');
         } catch (watermarkError) {
-            console.error('Watermarking failed, using original video:', watermarkError);
-            // Continue with original video if watermarking fails
+            console.error('❌ Watermarking failed:', watermarkError.message);
+            console.log('📹 Continuing with original video (no watermark)');
+            // watermarkedVideo remains as originalVideo
         }
         
         const totalTime = Date.now() - startTime;
