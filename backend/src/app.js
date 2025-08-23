@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import generateImageRoutes from './api/routes/generateImageControllerRoute.js';
+import generateImageRoutes from './api/routes/generateImageRoute.js';
+import generateVideoRoutes from './api/routes/generateVideoRoute.js';
 
 const app = express();
 
@@ -10,6 +11,7 @@ app.use(express.json());
 
 // API Routes
 app.use('/api', generateImageRoutes);
+app.use('/api', generateVideoRoutes);
 
 // Health check endpoint.
 app.get('/', (req, res) => {
