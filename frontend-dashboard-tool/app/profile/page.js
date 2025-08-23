@@ -367,7 +367,6 @@ export default function Profile() {
                         key={creation.id} 
                         creation={creation} 
                         userAddress={walletAddress}
-                        onPurchaseSuccess={fetchUserCreations}
                       />
                     ))}
                   </div>

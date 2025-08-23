@@ -1,63 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
-import { purchaseNFT } from '../services/contractService';
 
-export default function CreationCard({ creation, userAddress, onPurchaseSuccess }) {
+export default function CreationCard({ creation, userAddress }) {
   const [currentGatewayIndex, setCurrentGatewayIndex] = useState(0);
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [isPurchasing, setIsPurchasing] = useState(false);
-  const [localOwner, setLocalOwner] = useState(creation.owner);
   const timeoutRef = useRef(null);
   const imgRef = useRef(null);
-
-  // Update local owner when creation prop changes
-  useEffect(() => {
-    setLocalOwner(creation.owner);
-    console.log(`CreationCard ${creation.tokenId}: Owner updated to ${creation.owner}, localOwner: ${localOwner}, userAddress: ${userAddress}`);
-  }, [creation.owner]);
 
   const shortenAddress = (address) => {
     if (!address) return 'Unknown';
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
-
-  const handlePurchase = async () => {
-    if (!userAddress) {
-      alert('Please connect your wallet to purchase this NFT');
-      return;
-    }
-
-    if (localOwner === userAddress) {
-      alert('You already own this NFT');
-      return;
-    }
-
-    if (creation.license !== 'paid' || !creation.price) {
-      alert('This NFT is not for sale');
-      return;
-    }
-
-    setIsPurchasing(true);
-    try {
-      console.log(`Purchasing NFT ${creation.tokenId} for ${creation.price} ETH`);
-      const result = await purchaseNFT(creation.tokenId, creation.price);
-      console.log('Purchase successful:', result);
-      alert('Purchase successful! You now own this NFT.');
-      
-      // Immediately update local owner state to reflect the purchase
-      setLocalOwner(userAddress);
-      
-      // Call the callback to refresh the data
-      if (onPurchaseSuccess) {
-        onPurchaseSuccess();
-      }
-    } catch (error) {
-      console.error('Purchase failed:', error);
-      alert(`Purchase failed: ${error.message || 'Unknown error'}`);
-    } finally {
-      setIsPurchasing(false);
-    }
   };
 
   // Multiple IPFS gateways to handle rate limiting
@@ -98,12 +51,12 @@ export default function CreationCard({ creation, userAddress, onPurchaseSuccess 
     ];
   };
 
-  // Determine which image to display based on license and ownership
+  // Determine which image to display based on license
   const getDisplayImageUrl = () => {
     if (creation.license === 'free') {
       return creation.imageUrl; // Original for everyone
     } else if (creation.license === 'paid') {
-      if (localOwner === userAddress || creation.creator === userAddress) {
+      if (creation.owner === userAddress || creation.creator === userAddress) {
         return creation.imageUrl; // Original for owner/creator
       } else {
         return creation.watermarkedImageUrl; // Watermarked for others
@@ -284,7 +237,7 @@ export default function CreationCard({ creation, userAddress, onPurchaseSuccess 
               Free
             </div>
           )}
-          {creation.license === 'paid' && localOwner === userAddress && (
+          {creation.license === 'paid' && creation.owner === userAddress && (
             <div className="bg-blue-500/90 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg border border-blue-600/50">
               Owned
             </div>
@@ -324,34 +277,15 @@ export default function CreationCard({ creation, userAddress, onPurchaseSuccess 
                 </div>
               </div>
               
-              {/* Price/Purchase */}
+              {/* Price Display */}
               <div className="text-right">
                 {creation.license === 'free' ? (
                   <div className="text-lg font-semibold text-green-400">
                     Free
                   </div>
                 ) : creation.price ? (
-                  <div className="flex flex-col items-end space-y-2">
-                    {localOwner === userAddress ? (
-                      <div className="text-lg font-semibold text-blue-400">
-                        Owned
-                      </div>
-                    ) : (
-                  <>
-                    <div className="text-lg font-semibold text-green-400">
-                      {creation.price} ETH
-                    </div>
-                    {userAddress && (
-                      <button
-                        onClick={handlePurchase}
-                        disabled={isPurchasing}
-                        className="px-4 py-2 bg-green-500/90 backdrop-blur-sm text-white text-sm rounded-full hover:bg-green-600/90 disabled:bg-gray-400/90 disabled:cursor-not-allowed transition-all duration-300 shadow-lg border border-green-600/50 hover:border-green-500/70 hover:scale-105"
-                      >
-                        {isPurchasing ? 'Purchasing...' : 'Purchase'}
-                      </button>
-                    )}
-                  </>
-                )}
+                  <div className="text-lg font-semibold text-green-400">
+                    {creation.owner === userAddress ? 'Owned' : `${creation.price} ETH`}
                   </div>
                 ) : null}
               </div>

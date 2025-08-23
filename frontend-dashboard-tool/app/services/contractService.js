@@ -70,66 +70,18 @@ export async function getSignerContract() {
   return new ethers.Contract(CONTRACT_ADDRESS, CreationsArtifact.abi, signer);
 }
 
-export async function mintCreation(metadataIpfsHash, license = 'free', price = 0) {
+export async function mintCreation(metadataIpfsHash, license = 'free') {
   const contract = await getSignerContract();
   const metadataURI = metadataIpfsHash.startsWith('ipfs://')
     ? metadataIpfsHash
     : `ipfs://${metadataIpfsHash}`;
   
-  // Convert price from ETH to wei if provided
-  const priceInWei = price > 0 ? ethers.utils.parseEther(price.toString()) : 0;
-  
-  const tx = await contract.mintNFT(metadataURI, license, priceInWei);
+  const tx = await contract.mintNFT(metadataURI, license);
   const receipt = await tx.wait();
   return { txHash: tx.hash, receipt };
 }
 
-export async function purchaseNFT(tokenId, priceInEth) {
-  try {
-    const contract = await getSignerContract();
-    
-    // Convert price from ETH to wei
-    const priceInWei = ethers.utils.parseEther(priceInEth.toString());
-    
-    console.log(`Purchasing NFT ${tokenId} for ${priceInEth} ETH (${priceInWei} wei)`);
-    
-    // Estimate gas first
-    let gasEstimate;
-    try {
-      gasEstimate = await contract.estimateGas.purchaseNFT(tokenId, { value: priceInWei });
-      gasEstimate = gasEstimate.mul(120).div(100); // Add 20% buffer
-    } catch (error) {
-      console.warn('Gas estimation failed, using fallback:', error.message);
-      gasEstimate = 300000; // Fallback gas limit
-    }
-    
-    const tx = await contract.purchaseNFT(tokenId, { 
-      value: priceInWei,
-      gasLimit: gasEstimate
-    });
-    
-    console.log('Purchase transaction sent:', tx.hash);
-    const receipt = await tx.wait();
-    console.log('Purchase transaction confirmed:', receipt);
-    
-    return { txHash: tx.hash, receipt };
-  } catch (error) {
-    console.error('Error purchasing NFT:', error);
-    throw error;
-  }
-}
 
-export async function getTokenPrice(tokenId) {
-  try {
-    const contract = getReadOnlyContract();
-    const priceInWei = await contract.getTokenPrice(tokenId);
-    const priceInEth = ethers.utils.formatEther(priceInWei);
-    return parseFloat(priceInEth);
-  } catch (error) {
-    console.error('Error getting token price:', error);
-    return 0;
-  }
-}
 
 export async function fetchMyCreations(ownerAddress) {
   try {
