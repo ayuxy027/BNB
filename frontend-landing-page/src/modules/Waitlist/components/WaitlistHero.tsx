@@ -71,11 +71,11 @@ const WaitlistHero: React.FC = () => {
                     />
                 </div>
             </div>
-            <p className="text-slate-600 md:text-base max-md:px-2 text-center max-w-xl mt-3">
+            <p className="text-slate-600 md:text-base max-md:px-2 text-center max-w-xl mt-7">
             An AI-driven image generator that turns text prompts into stunning visuals, enables seamless showcasing, and uses Web3 for transparent, decentralized licensing.
             </p>
 
-            <div className="mt-10">
+            <div className="mt-5">
                 <WaitlistBadge />
             </div>
 
