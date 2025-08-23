@@ -1,0 +1,160 @@
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Vite build output
+dist/
+build/
+.vite/
+.vite-cache/
+*.local
+
+# dotenv environment variables
+.env
+.env.*
+!.env.example
+
+# OS generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+Desktop.ini
+$RECYCLE.BIN/
+*.swp
+*.swo
+
+# VSCode and IDEs
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Log files
+*.log
+
+# Coverage directory used by tools like istanbul
+coverage/
+.nyc_output/
+
+# Misc
+*.tgz
+*.gz
+*.zip
+
+# Mac system files
+.AppleDouble
+.LSOverride
+
+# Windows system files
+*.lnk
+
+# Test output
+test-output/
+junit.xml
+
+# Storybook build
+storybook-static/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# ESLint cache
+.eslintcache
+
+# Prettier cache
+.prettiercache
+
+# Parcel cache
+.cache/
+
+# SASS cache
+.sass-cache/
+
+# NPM cache
+.npm/
+
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Firebase
+.firebase/
+
+# JetBrains IDEs
+.idea/
+*.iml
+
+# VSCode settings
+.vscode/
+
+# React Native
+.expo/
+web-build/
+
+# Next.js (if ever used)
+.next/
+
+# Snapshots
+__snapshots__/
+
+# Cypress
+cypress/screenshots/
+cypress/videos/
+
+# Playwright
+playwright-report/
+test-results/
+
+# Miscellaneous
+*.orig
+*.rej
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Editor directories and files
+*.code-workspace
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Local history for JetBrains
+.localhistory/
+
+# Mac Quick Look
+._*
+
+# NPM audit logs
+audit.log
+
+# Lint-staged cache
+.lintstagedrc
+
+# VSCode server
+.vscode-server/
+
+# Windows thumbnail cache
+ehthumbs_vista.db
+
+# SvelteKit (if ever used)
+.svelte-kit/
+
+# Bun
+.bun/

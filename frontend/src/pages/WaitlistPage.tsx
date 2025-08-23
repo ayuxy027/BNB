@@ -6,7 +6,9 @@ const WaitlistPage = () => {
   return (
     <div className="min-h-screen bg-white">
       <WaitlistHero />
-      <WaitlistGallery />
+      <div className="mt-30 mb-10">
+        <WaitlistGallery />
+      </div>
       <WaitlistFooter />
     </div>
   )
