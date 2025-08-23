@@ -53,7 +53,7 @@ export default function WaitlistGallery() {
                 />
             </div>
 
-            <h1 className="text-3xl font-semibold text-center mx-auto relative z-10">Crystal Clear Presentations</h1>
+            <h1 className="text-3xl font-semibold text-center mx-auto relative z-10">Stunning Visual Creations</h1>
             <p className="text-sm text-slate-500 text-center mt-2 max-w-lg mx-auto relative z-10">
                 Uses images of Chromatic Aberration and Visual Acuity because Stock photos are so 2013s.
             </p>

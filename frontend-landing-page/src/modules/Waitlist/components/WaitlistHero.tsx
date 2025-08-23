@@ -41,14 +41,12 @@ const WaitlistHero: React.FC = () => {
         <section className="flex flex-col items-center bg-[url('https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/hero/gradientBg.svg')] bg-cover text-gray-800 pb-16 text-sm">
             <Navbar />
 
-            <div className="mt-22">
-                <WaitlistBadge />
-            </div>
+            
 
-            <div className="relative text-center">
+            <div className="relative text-center mt-20">
                 <h1
-                    className="text-4xl md:text-6xl font-medium max-w-3xl mt-5 bg-gradient-to-r from-black to-[#748298] text-transparent bg-clip-text">
-                    Create. Present. Impress. With Faster Inference.
+                    className="text-4xl md:text-6xl font-medium max-w-4xl mt-5 bg-gradient-to-r from-black to-[#748298] text-transparent bg-clip-text">
+                    Create. Display. Monetize. With AI & Web3.
                 </h1>
                 {/* Decorative underline positioned under the text */}
                 <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
@@ -74,8 +72,12 @@ const WaitlistHero: React.FC = () => {
                 </div>
             </div>
             <p className="text-slate-600 md:text-base max-md:px-2 text-center max-w-xl mt-3">
-                An AI powered presentations generator that uses fast inference model providors for lightning fast text generation and crystal clear images.
+            An AI-driven image generator that turns text prompts into stunning visuals, enables seamless showcasing, and uses Web3 for transparent, decentralized licensing.
             </p>
+
+            <div className="mt-10">
+                <WaitlistBadge />
+            </div>
 
             <div className="mt-16">
                 <WaitlistMarquee />
