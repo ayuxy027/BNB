@@ -1,6 +1,5 @@
 import WaitlistHero from '../components/WaitlistHero'
 import WaitlistGallery from '../components/WaitlistGallery'
-import WaitlistBadge from '../components/WaitlistBadge'
 import WaitlistFooter from '../components/WaitlistFooter'
 
 const WaitlistPage = () => {
@@ -8,7 +7,6 @@ const WaitlistPage = () => {
     <div className="min-h-screen bg-white">
       <WaitlistHero />
       <WaitlistGallery />
-      <WaitlistBadge />
       <WaitlistFooter />
     </div>
   )
