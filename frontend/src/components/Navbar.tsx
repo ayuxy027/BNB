@@ -4,17 +4,21 @@ import logo from '../assets/logo.png';
 
 const Navbar: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isWalletConnected, setIsWalletConnected] = useState(false);
 
   // Menu open/close handlers
   const handleOpenMenu = () => setMenuOpen(true);
   const handleCloseMenu = () => setMenuOpen(false);
 
-  const scrollToWaitlist = () => {
-    const waitlistSection = document.querySelector('form');
-    if (waitlistSection) {
-      waitlistSection.scrollIntoView({ behavior: 'smooth' });
-    }
-    setMenuOpen(false);
+  const connectWallet = () => {
+    // Mock wallet connection - in real implementation this would connect to MetaMask
+    setIsWalletConnected(true);
+    console.log('Connecting to MetaMask...');
+  };
+
+  const disconnectWallet = () => {
+    setIsWalletConnected(false);
+    console.log('Disconnecting wallet...');
   };
 
   return (
@@ -39,24 +43,38 @@ const Navbar: React.FC = () => {
           ].join(' ')
         }
       >
-        <Link to="/dashboard" className="hover:text-gray-500" onClick={handleCloseMenu}>
+        <Link to="/dashboard" className="hover:text-gray-500 transition-colors" onClick={handleCloseMenu}>
           Dashboard
         </Link>
-        <Link to="/" className="hover:text-gray-500" onClick={handleCloseMenu}>
-          Editor
+        <Link to="/create" className="hover:text-gray-500 transition-colors" onClick={handleCloseMenu}>
+          Create
         </Link>
-        <Link to="/" className="hover:text-gray-500" onClick={handleCloseMenu}>
-          Templates
+        <Link to="/profile" className="hover:text-gray-500 transition-colors" onClick={handleCloseMenu}>
+          Profile
         </Link>
-        <Link to="/" className="hover:text-gray-500" onClick={handleCloseMenu}>
-          Pricing & Plans
-        </Link>
-        <button
-          className="md:hidden bg-slate-800 hover:bg-slate-900 text-white px-8 py-3 rounded-full font-medium transition"
-          onClick={scrollToWaitlist}
-        >
-          Join Waitlist
-        </button>
+        
+        {/* Wallet Connection Button */}
+        {isWalletConnected ? (
+          <button
+            onClick={disconnectWallet}
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition-colors flex items-center gap-2"
+          >
+            <div className="w-2 h-2 bg-green-300 rounded-full"></div>
+            Connected
+          </button>
+        ) : (
+          <button
+            onClick={connectWallet}
+            className="bg-slate-800 hover:bg-slate-900 text-white px-6 py-2 rounded-full font-medium transition-colors flex items-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect width="20" height="14" x="2" y="5" rx="2" ry="2"/>
+              <line x1="2" x2="22" y1="10" y2="10"/>
+            </svg>
+            Connect Wallet
+          </button>
+        )}
+        
         <button
           className="md:hidden bg-gray-900 hover:bg-gray-800 text-white p-2 rounded-md aspect-square font-medium transition"
           onClick={handleCloseMenu}
