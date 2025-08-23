@@ -6,6 +6,26 @@ export class IPFSService {
     this.pinataApiKey = process.env.NEXT_PUBLIC_PINATA_API_KEY;
     this.pinataSecretApiKey = process.env.NEXT_PUBLIC_PINATA_SECRET_API_KEY;
     this.pinataJWT = process.env.NEXT_PUBLIC_PINATA_JWT;
+    
+    // Validate configuration
+    this.validateConfiguration();
+  }
+
+  validateConfiguration() {
+    const hasJWT = !!this.pinataJWT;
+    const hasApiKeys = !!(this.pinataApiKey && this.pinataSecretApiKey);
+    
+    if (!hasJWT && !hasApiKeys) {
+      console.warn('⚠️  IPFS Configuration Missing:');
+      console.warn('   - Set NEXT_PUBLIC_PINATA_JWT for JWT authentication (recommended)');
+      console.warn('   - Or set NEXT_PUBLIC_PINATA_API_KEY and NEXT_PUBLIC_PINATA_SECRET_API_KEY');
+      console.warn('   - IPFS uploads will fail without proper configuration');
+      console.warn('   - Get credentials from: https://app.pinata.cloud/');
+    } else if (hasJWT) {
+      console.log('✅ IPFS configured with JWT token');
+    } else if (hasApiKeys) {
+      console.log('✅ IPFS configured with API keys');
+    }
   }
 
   // Generate a unique identifier for this creation

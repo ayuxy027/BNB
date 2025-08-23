@@ -1,8 +1,35 @@
 'use client';
 
 import { ethers } from 'ethers';
-// Import compiled artifact directly from backend (dev-only). Adjust path if needed.
-import CreationsArtifact from '../../../bc-backend/artifacts/contracts/Creations.sol/Creations.json';
+
+// Dynamic import for contract artifact with fallback
+let CreationsArtifact = null;
+try {
+  // Try to import the compiled artifact
+  CreationsArtifact = require('../../../bc-backend/artifacts/contracts/Creations.sol/Creations.json');
+} catch (error) {
+  console.warn('Contract artifact not found. Please compile the smart contracts first.');
+  // Fallback to a minimal ABI for development
+  CreationsArtifact = {
+    abi: [
+      // Basic ERC721 functions
+      "function name() view returns (string)",
+      "function symbol() view returns (string)",
+      "function tokenURI(uint256 tokenId) view returns (string)",
+      "function ownerOf(uint256 tokenId) view returns (address)",
+      "function balanceOf(address owner) view returns (uint256)",
+      "function totalSupply() view returns (uint256)",
+      // Custom contract functions
+      "function mintNFT(string memory metadataURI, string memory license, uint256 price) external returns (uint256)",
+      "function purchaseNFT(uint256 tokenId) external payable",
+      "function getTokenPrice(uint256 tokenId) view returns (uint256)",
+      "function getTokenLicense(uint256 tokenId) view returns (string)",
+      "function getTokenOwner(uint256 tokenId) view returns (address)",
+      "function getAllTokens() view returns (uint256[])",
+      "function getTokensByOwner(address owner) view returns (uint256[])"
+    ]
+  };
+}
 
 const DEFAULT_RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'http://127.0.0.1:8545';
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CREATIONS_ADDRESS || '';
@@ -19,13 +46,23 @@ function getJsonRpcProvider() {
 }
 
 export function getReadOnlyContract() {
-  if (!CONTRACT_ADDRESS) throw new Error('Missing NEXT_PUBLIC_CREATIONS_ADDRESS');
+  if (!CONTRACT_ADDRESS) {
+    console.warn('⚠️  Contract address not configured:');
+    console.warn('   - Set NEXT_PUBLIC_CREATIONS_ADDRESS in your environment');
+    console.warn('   - Deploy the contract first: npx hardhat deploy');
+    throw new Error('Missing NEXT_PUBLIC_CREATIONS_ADDRESS - Please configure contract address');
+  }
   const provider = getJsonRpcProvider();
   return new ethers.Contract(CONTRACT_ADDRESS, CreationsArtifact.abi, provider);
 }
 
 export async function getSignerContract() {
-  if (!CONTRACT_ADDRESS) throw new Error('Missing NEXT_PUBLIC_CREATIONS_ADDRESS');
+  if (!CONTRACT_ADDRESS) {
+    console.warn('⚠️  Contract address not configured:');
+    console.warn('   - Set NEXT_PUBLIC_CREATIONS_ADDRESS in your environment');
+    console.warn('   - Deploy the contract first: npx hardhat deploy');
+    throw new Error('Missing NEXT_PUBLIC_CREATIONS_ADDRESS - Please configure contract address');
+  }
   const web3 = getBrowserProvider();
   if (!web3) throw new Error('No injected provider found');
   await web3.send('eth_requestAccounts', []);
