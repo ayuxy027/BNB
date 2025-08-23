@@ -11,7 +11,6 @@ export default function Create() {
   const [style, setStyle] = useState('realistic');
   const [mood, setMood] = useState('neutral');
   const [license, setLicense] = useState('free');
-  const [price, setPrice] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState(null);
   const [isMinting, setIsMinting] = useState(false);
@@ -110,7 +109,6 @@ export default function Create() {
         style: style,
         mood: mood,
         license: license,
-        price: license === 'paid' ? price : null,
         creator: walletAddress,
         prompt: prompt,
         creationDate: new Date().toISOString()
@@ -133,9 +131,9 @@ export default function Create() {
       setIpfsResult(result);
       console.log('IPFS upload successful:', result);
 
-      // Call smart contract mint with metadata hash, license, and price
-      console.log('Minting NFT with metadata hash:', result.metadataHash, 'license:', license, 'price:', price);
-      const mint = await mintCreation(result.metadataHash, license, price);
+      // Call smart contract mint with metadata hash and license
+      console.log('Minting NFT with metadata hash:', result.metadataHash, 'license:', license);
+      const mint = await mintCreation(result.metadataHash, license);
       setTxResult({
         txHash: mint.txHash,
         blockNumber: mint.receipt.blockNumber,
@@ -256,23 +254,7 @@ export default function Create() {
                 </div>
               </div>
 
-              {license === 'paid' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Price (ETH)
-                  </label>
-                  <input
-                    type="number"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="0.01"
-                    step="0.01"
-                    min="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white placeholder-gray-500"
-                    required
-                  />
-                </div>
-              )}
+
 
               <button
                 type="submit"
@@ -312,9 +294,6 @@ export default function Create() {
                   {typeof generatedImage === 'object' && (
                     <div className="mt-2 text-xs text-gray-500">
                       <p>License: <span className="font-medium">{license}</span></p>
-                      {license === 'paid' && price && (
-                        <p>Price: <span className="font-medium">{price} ETH</span></p>
-                      )}
                     </div>
                   )}
                   <div className="mt-4">
