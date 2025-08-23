@@ -507,7 +507,6 @@ export default function Home() {
                 key={creation.id} 
                 creation={creation} 
                 userAddress={walletAddress}
-                onPurchaseSuccess={fetchAllNFTs}
               />
             ))}
           </div>
