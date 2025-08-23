@@ -1,9 +1,6 @@
-'use client';
-
 import React, { useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import logo from '../modules/Waitlist/assets/logo.png';
+import { Link } from 'react-router-dom';
+import logo from '../assets/logo.png';
 
 const Navbar: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -23,12 +20,10 @@ const Navbar: React.FC = () => {
   return (
     <nav className="sticky top-0 z-50 flex items-center justify-between p-4 border-b border-slate-200/20 md:px-16 lg:px-24 xl:px-32 w-full bg-white/80 backdrop-blur-xl shadow-sm">
       <div className="h-10 flex items-center">
-        <Link href="/">
-          <Image
+        <Link to="/">
+          <img
             src={logo}
             alt="Weave Logo"
-            width={320}
-            height={80}
             className="h-80 w-auto"
             style={{ maxHeight: '8rem' }}
           />
@@ -44,16 +39,16 @@ const Navbar: React.FC = () => {
           ].join(' ')
         }
       >
-        <Link href="/dashboard" className="hover:text-gray-500" onClick={handleCloseMenu}>
+        <Link to="/dashboard" className="hover:text-gray-500" onClick={handleCloseMenu}>
           Dashboard
         </Link>
-        <Link href="/" className="hover:text-gray-500" onClick={handleCloseMenu}>
+        <Link to="/" className="hover:text-gray-500" onClick={handleCloseMenu}>
           Editor
         </Link>
-        <Link href="/" className="hover:text-gray-500" onClick={handleCloseMenu}>
+        <Link to="/" className="hover:text-gray-500" onClick={handleCloseMenu}>
           Templates
         </Link>
-        <Link href="/" className="hover:text-gray-500" onClick={handleCloseMenu}>
+        <Link to="/" className="hover:text-gray-500" onClick={handleCloseMenu}>
           Pricing & Plans
         </Link>
         <button

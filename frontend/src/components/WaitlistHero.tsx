@@ -1,8 +1,5 @@
-'use client';
-
 import React, { useEffect } from 'react';
-import Image from 'next/image';
-import Navbar from '../../../common/Navbar';
+import Navbar from './Navbar';
 import WaitlistMarquee from './WaitlistMarquee';
 import WaitlistBadge from './WaitlistBadge';
 import underline from '../assets/underline.svg';
@@ -52,22 +49,18 @@ const WaitlistHero: React.FC = () => {
                 </h1>
                 {/* Decorative underline positioned under the text */}
                 <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-                    <Image
+                    <img
                         src={underline}
                         alt=""
-                        width={224}
-                        height={50}
                         className="w-56 h-auto"
                         style={{ maxWidth: '14rem' }}
                     />
                 </div>
                 {/* Second underline line */}
                 <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2">
-                    <Image
+                    <img
                         src={underline}
                         alt=""
-                        width={192}
-                        height={50}
                         className="w-48 h-auto"
                         style={{ maxWidth: '12rem' }}
                     />

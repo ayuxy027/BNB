@@ -1,9 +1,9 @@
-'use client';
+import React from 'react';
 
-export default function WaitlistBadge() {
+const WaitlistBadge: React.FC = () => {
     return (
         <>
-            <style jsx>{`
+            <style>{`
                 @keyframes shine {
                     0% {
                         background-position: 0% 50%;
@@ -33,3 +33,5 @@ export default function WaitlistBadge() {
         </>
     );
 };
+
+export default WaitlistBadge;

@@ -1,7 +1,4 @@
-'use client';
-
 import React, { useEffect } from "react";
-import Image from "next/image";
 
 const images = [
     {
@@ -22,7 +19,7 @@ const images = [
     },
 ];
 
-export default function WaitlistGallery() {
+const WaitlistGallery: React.FC = () => {
     // Dynamically load the Poppins font for client-side rendering
     useEffect(() => {
         const id = "poppins-font-link";
@@ -44,11 +41,9 @@ export default function WaitlistGallery() {
         <div className="relative">
             {/* Person SVG Background */}
             <div className="absolute right-0 top-0 w-96 h-full opacity-20 pointer-events-none z-0 transform translate-x-8 -translate-y-64 -rotate-40 hidden md:block">
-                <Image
+                <img
                     src="/person.svg"
                     alt="Person background"
-                    width={384}
-                    height={400}
                     className="w-full h-full object-contain"
                 />
             </div>
@@ -60,17 +55,17 @@ export default function WaitlistGallery() {
             <div className="grid grid-cols-2 md:flex md:flex-wrap items-center justify-center mt-10 mx-auto gap-4 relative z-10">
                 {images.map((img, idx) => (
                     <div key={idx} className="max-w-72 h-96 relative rounded-lg overflow-hidden hover:-translate-y-1 transition-all duration-300">
-                        <Image
+                        <img
                             src={img.src}
                             alt={img.alt}
-                            width={288}
-                            height={384}
                             className="w-full h-full object-cover rounded-lg"
-                            draggable="false"
+                            draggable={false}
                         />
                     </div>
                 ))}
             </div>
         </div>
     );
-}
+};
+
+export default WaitlistGallery;
